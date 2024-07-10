@@ -46,7 +46,7 @@ def inference(a):
         for i, index in enumerate(test_indexes):
             try:
                 print(index)
-                noisy_wav, _ = librosa.load(os.path.join(a.input_noisy_wavs_dir, index+'.wav'))
+                noisy_wav, sr = librosa.load(os.path.join(a.input_noisy_wavs_dir, index+'.wav'))
                 noisy_wav = torch.FloatTensor(noisy_wav).to(device)
                 norm_factor = torch.sqrt(len(noisy_wav) / torch.sum(noisy_wav ** 2.0)).to(device)
                 noisy_wav = (noisy_wav * norm_factor).unsqueeze(0)
@@ -57,7 +57,7 @@ def inference(a):
     
                 output_file = os.path.join(a.output_dir, index+'.wav')
     
-                sf.write(output_file, audio_g.squeeze().cpu().numpy(), h.sampling_rate, 'PCM_16')
+                sf.write(output_file, audio_g.squeeze().cpu().numpy(), sr, 'PCM_16')
             except:
                 continue
 
