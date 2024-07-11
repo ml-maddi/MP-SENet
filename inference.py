@@ -35,18 +35,24 @@ def inference(a):
     state_dict = load_checkpoint(a.checkpoint_file, device)
     model.load_state_dict(state_dict['generator'])
 
-    with open(a.input_test_file, 'r', encoding='utf-8') as fi:
-        test_indexes = [x.split('|')[0] for x in fi.read().split('\n') if len(x) > 0]
+    # with open(a.input_test_file, 'r', encoding='utf-8') as fi:
+    #     test_indexes = [x.split('|')[0] for x in fi.read().split('\n') if len(x) > 0]
+
+    pattern = f"{a.input_noisy_wavs_dir}/*"
+
+    files = glob.glob(pattern)
+
 
     os.makedirs(a.output_dir, exist_ok=True)
 
     model.eval()
 
     with torch.no_grad():
-        for i, index in enumerate(test_indexes):
+        for i, file in enumerate(files):
+            index = file.split("/")[-1].split(".")[0]
             try:
-                print(index)
-                noisy_wav, sr = librosa.load(os.path.join(a.input_noisy_wavs_dir, index+'.wav'))
+                
+                noisy_wav, sr = librosa.load(file)
                 noisy_wav = torch.FloatTensor(noisy_wav).to(device)
                 norm_factor = torch.sqrt(len(noisy_wav) / torch.sum(noisy_wav ** 2.0)).to(device)
                 noisy_wav = (noisy_wav * norm_factor).unsqueeze(0)
@@ -58,6 +64,7 @@ def inference(a):
                 output_file = os.path.join(a.output_dir, index+'.wav')
     
                 sf.write(output_file, audio_g.squeeze().cpu().numpy(), sr, 'PCM_16')
+                print(index)
             except:
                 continue
 
